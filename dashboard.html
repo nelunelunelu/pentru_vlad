@@ -1,0 +1,4502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romanian Companies Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 2rem;
+        }
+        .company-link {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .company-link:hover {
+            text-decoration: underline;
+        }
+        .search-box {
+            margin-bottom: 1rem;
+        }
+        .table-container {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        @media (max-width: 768px) {
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border: 1px solid #dee2e6;
+                border-radius: 0.375rem;
+            }
+            .table {
+                min-width: 900px;
+                margin-bottom: 0;
+            }
+            .table th, .table td {
+                white-space: nowrap;
+                padding: 0.5rem 0.75rem;
+            }
+            .table th:first-child, .table td:first-child {
+                min-width: 200px;
+            }
+            .table th:nth-child(2), .table td:nth-child(2) {
+                min-width: 80px;
+            }
+            .table th:nth-child(3), .table td:nth-child(3) {
+                min-width: 150px;
+            }
+            .table th:nth-child(4), .table td:nth-child(4) {
+                min-width: 100px;
+            }
+            .table th:nth-child(5), .table td:nth-child(5) {
+                min-width: 100px;
+            }
+            .table th:nth-child(6), .table td:nth-child(6) {
+                min-width: 150px;
+            }
+        }
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .industry-description {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .sortable:hover {
+            background-color: #495057;
+        }
+        .sort-indicator {
+            margin-left: 5px;
+            font-size: 0.8em;
+        }
+        @media (max-width: 576px) {
+            .stat-card h3 {
+                font-size: 1.5rem;
+            }
+            .card-header h5 {
+                font-size: 1rem;
+            }
+            .table th {
+                font-size: 0.875rem;
+            }
+            .table td {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">Romanian Companies Analysis Dashboard</h1>
+                <p class="text-center text-muted">Companies with ≤2 employees and high profits</p>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <h3>74</h3>
+                    <p class="mb-0">Interesting Companies</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <h3>1,952,363 RON</h3>
+                    <p class="mb-0">Average Profit</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <h3>8,381,302 RON</h3>
+                    <p class="mb-0">Highest Profit</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card text-center">
+                    <h3>49</h3>
+                    <p class="mb-0">Industries</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Profit Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="profitChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Industry Breakdown (CAEN Codes) <small class="text-muted">- Click slices for details</small></h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="industryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Profit vs Employees</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="scatterChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Performance by Year</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="yearChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Table -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Company Details <small class="text-muted d-md-none">- Scroll right to see more →</small></h5>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search companies...">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark sticky-top">
+                                    <tr>
+                                        <th class="sortable" data-column="name">Company Name <span class="sort-indicator">↕</span></th>
+                                        <th class="sortable" data-column="caen">CAEN <span class="sort-indicator">↕</span></th>
+                                        <th class="sortable" data-column="activity">Activity <span class="sort-indicator">↕</span></th>
+                                        <th class="sortable" data-column="best_year">Best Year <span class="sort-indicator">↕</span></th>
+                                        <th class="sortable" data-column="best_employees">Employees <span class="sort-indicator">↕</span></th>
+                                        <th class="sortable" data-column="max_profit">Max Profit (RON) <span class="sort-indicator">↕</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="companyTable">
+                                    <!-- Table rows will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="row mt-4">
+            <div class="col-12 text-center text-muted">
+                <p>Generated on 2025-08-06 11:32:33 | Data source: listafirme.ro</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Industry Modal -->
+    <div class="modal fade" id="industryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="industryModalTitle">Industry Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="industry-description" id="industryDescription"></div>
+                    <div id="industryCompanies"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Data from Python
+        const companies = [
+  {
+    "href": "/1722-studiolab-inc-srl-25139471/",
+    "name": "1722 Studiolab Inc SRL",
+    "url": "https://www.listafirme.ro/1722-studiolab-inc-srl-25139471/",
+    "caen": "7111",
+    "activity": "Activitati de arhitectura",
+    "total_years": 16,
+    "years": [
+      2024,
+      2020
+    ],
+    "employees": [
+      0,
+      2
+    ],
+    "profits": [
+      2192370,
+      1412304
+    ],
+    "max_profit": 2192370,
+    "min_employees": 0,
+    "best_year": 2024,
+    "best_employees": 0,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/2b-intelligent-soft-sa-16558004/",
+    "name": "2b Intelligent Soft SA",
+    "url": "https://www.listafirme.ro/2b-intelligent-soft-sa-16558004/",
+    "caen": "6201",
+    "activity": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+    "total_years": 20,
+    "years": [
+      2018
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      2560435
+    ],
+    "max_profit": 2560435,
+    "min_employees": 0,
+    "best_year": 2018,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/2m-digital-srl-12511050/",
+    "name": "2m Digital SRL",
+    "url": "https://www.listafirme.ro/2m-digital-srl-12511050/",
+    "caen": "4651",
+    "activity": "Comert cu ridicata al calculatoarelor, echipamentelor periferice si software-lui",
+    "total_years": 20,
+    "years": [
+      2012
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1211660
+    ],
+    "max_profit": 1211660,
+    "min_employees": 0,
+    "best_year": 2012,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/2n-communications-srl-12600327/",
+    "name": "2n Communications SRL",
+    "url": "https://www.listafirme.ro/2n-communications-srl-12600327/",
+    "caen": "4619",
+    "activity": "Intermedieri in comertul cu produse diverse",
+    "total_years": 20,
+    "years": [
+      2006
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      2761064
+    ],
+    "max_profit": 2761064,
+    "min_employees": 1,
+    "best_year": 2006,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/3d-american-style-development-srl-27071968/",
+    "name": "3d American Style Development SRL",
+    "url": "https://www.listafirme.ro/3d-american-style-development-srl-27071968/",
+    "caen": "4110",
+    "activity": "Dezvoltare (promovare) imobiliara",
+    "total_years": 15,
+    "years": [
+      2017
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      5729554
+    ],
+    "max_profit": 5729554,
+    "min_employees": 0,
+    "best_year": 2017,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/3dbau-srl-42084422/",
+    "name": "3dbau SRL",
+    "url": "https://www.listafirme.ro/3dbau-srl-42084422/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 5,
+    "years": [
+      2020
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1312368
+    ],
+    "max_profit": 1312368,
+    "min_employees": 0,
+    "best_year": 2020,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/4gps-international-srl-38481459/",
+    "name": "4gps International SRL",
+    "url": "https://www.listafirme.ro/4gps-international-srl-38481459/",
+    "caen": "6201",
+    "activity": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+    "total_years": 8,
+    "years": [
+      2024
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1433648
+    ],
+    "max_profit": 1433648,
+    "min_employees": 2,
+    "best_year": 2024,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/4u-company-srl-14529231/",
+    "name": "4u Company SRL",
+    "url": "https://www.listafirme.ro/4u-company-srl-14529231/",
+    "caen": "7912",
+    "activity": "Activitati ale tur-operatorilor",
+    "total_years": 20,
+    "years": [
+      2022
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1186651
+    ],
+    "max_profit": 1186651,
+    "min_employees": 2,
+    "best_year": 2022,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/7d-solutions-srl-28625271/",
+    "name": "7d Solutions SRL",
+    "url": "https://www.listafirme.ro/7d-solutions-srl-28625271/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 14,
+    "years": [
+      2020
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1514516
+    ],
+    "max_profit": 1514516,
+    "min_employees": 0,
+    "best_year": 2020,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.c.i.r.-a.g.-srl-373654/",
+    "name": "A.C.I.R. A.G. SRL",
+    "url": "https://www.listafirme.ro/a.c.i.r.-a.g.-srl-373654/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 20,
+    "years": [
+      2021
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1012010
+    ],
+    "max_profit": 1012010,
+    "min_employees": 0,
+    "best_year": 2021,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.g.-general-construct-srl-8097163/",
+    "name": "A.G. General Construct SRL",
+    "url": "https://www.listafirme.ro/a.g.-general-construct-srl-8097163/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 20,
+    "years": [
+      2024
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1488862
+    ],
+    "max_profit": 1488862,
+    "min_employees": 0,
+    "best_year": 2024,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.m.-tel-composite-srl-10770112/",
+    "name": "A.M. Tel Composite SRL",
+    "url": "https://www.listafirme.ro/a.m.-tel-composite-srl-10770112/",
+    "caen": "2229",
+    "activity": "Fabricarea altor produse din material plastic",
+    "total_years": 20,
+    "years": [
+      2023
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1900158
+    ],
+    "max_profit": 1900158,
+    "min_employees": 1,
+    "best_year": 2023,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.m.r.-leasing-ifn-sa-8534217/",
+    "name": "A.M.R. Leasing IFN SA",
+    "url": "https://www.listafirme.ro/a.m.r.-leasing-ifn-sa-8534217/",
+    "caen": "6492",
+    "activity": "Alte activitati de creditare",
+    "total_years": 17,
+    "years": [
+      2018
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1545747
+    ],
+    "max_profit": 1545747,
+    "min_employees": 0,
+    "best_year": 2018,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.n.v.-trader-srl-15032752/",
+    "name": "A.N.V. Trader SRL",
+    "url": "https://www.listafirme.ro/a.n.v.-trader-srl-15032752/",
+    "caen": "4675",
+    "activity": "Comert cu ridicata al produselor chimice",
+    "total_years": 20,
+    "years": [
+      2022
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1322892
+    ],
+    "max_profit": 1322892,
+    "min_employees": 2,
+    "best_year": 2022,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.s.g.-com-srl-9914036/",
+    "name": "A.S.G. Com SRL",
+    "url": "https://www.listafirme.ro/a.s.g.-com-srl-9914036/",
+    "caen": "4211",
+    "activity": "Lucrari de constructii a drumurilor si autostrazilor",
+    "total_years": 20,
+    "years": [
+      2023
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1511818
+    ],
+    "max_profit": 1511818,
+    "min_employees": 1,
+    "best_year": 2023,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/a.t.d.-system-srl-13703290/",
+    "name": "A.T.D. System SRL",
+    "url": "https://www.listafirme.ro/a.t.d.-system-srl-13703290/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 20,
+    "years": [
+      2008
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1200344
+    ],
+    "max_profit": 1200344,
+    "min_employees": 0,
+    "best_year": 2008,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/aad-techno-light-srl-13845651/",
+    "name": "Aad Techno Light SRL",
+    "url": "https://www.listafirme.ro/aad-techno-light-srl-13845651/",
+    "caen": "4321",
+    "activity": "Lucrari de instalatii electrice",
+    "total_years": 20,
+    "years": [
+      2024
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1496747
+    ],
+    "max_profit": 1496747,
+    "min_employees": 2,
+    "best_year": 2024,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/aas-fly-consulting-srl-28402121/",
+    "name": "Aas Fly Consulting SRL",
+    "url": "https://www.listafirme.ro/aas-fly-consulting-srl-28402121/",
+    "caen": "7112",
+    "activity": "Activitati de inginerie si consultanta tehnica legate de acestea",
+    "total_years": 14,
+    "years": [
+      2022,
+      2019
+    ],
+    "employees": [
+      1,
+      1
+    ],
+    "profits": [
+      1179289,
+      2070103
+    ],
+    "max_profit": 2070103,
+    "min_employees": 1,
+    "best_year": 2019,
+    "best_employees": 1,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/ab-construct-srl-12112539/",
+    "name": "Ab Construct SRL",
+    "url": "https://www.listafirme.ro/ab-construct-srl-12112539/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 20,
+    "years": [
+      2021
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1134801
+    ],
+    "max_profit": 1134801,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/ab-immo-cluj-srl-13705518/",
+    "name": "Ab Immo Cluj SRL",
+    "url": "https://www.listafirme.ro/ab-immo-cluj-srl-13705518/",
+    "caen": "6820",
+    "activity": "Inchirierea si subinchirierea bunurilor imobiliare proprii sau inchiriate",
+    "total_years": 20,
+    "years": [
+      2023,
+      2021
+    ],
+    "employees": [
+      1,
+      1
+    ],
+    "profits": [
+      3043019,
+      1656912
+    ],
+    "max_profit": 3043019,
+    "min_employees": 1,
+    "best_year": 2023,
+    "best_employees": 1,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/ab-immo-timisoara-srl-12863870/",
+    "name": "Ab Immo Timisoara SRL",
+    "url": "https://www.listafirme.ro/ab-immo-timisoara-srl-12863870/",
+    "caen": "6820",
+    "activity": "Inchirierea si subinchirierea bunurilor imobiliare proprii sau inchiriate",
+    "total_years": 20,
+    "years": [
+      2021
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1009410
+    ],
+    "max_profit": 1009410,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/abator-costiprod-2000-srl-30065613/",
+    "name": "Abator Costiprod 2000 SRL",
+    "url": "https://www.listafirme.ro/abator-costiprod-2000-srl-30065613/",
+    "caen": "1013",
+    "activity": "Fabricarea produselor din carne (inclusiv din carne de pasare)",
+    "total_years": 13,
+    "years": [
+      2021,
+      2020,
+      2019
+    ],
+    "employees": [
+      0,
+      0,
+      0
+    ],
+    "profits": [
+      1482089,
+      2685609,
+      1543871
+    ],
+    "max_profit": 2685609,
+    "min_employees": 0,
+    "best_year": 2020,
+    "best_employees": 0,
+    "interesting_years_count": 3
+  },
+  {
+    "href": "/abc-productie-de-evenimente-srl-29338205/",
+    "name": "Abc Productie De Evenimente SRL",
+    "url": "https://www.listafirme.ro/abc-productie-de-evenimente-srl-29338205/",
+    "caen": "9002",
+    "activity": "Activitati suport pentru interpretarea artistica (spectacole)",
+    "total_years": 13,
+    "years": [
+      2022
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1169472
+    ],
+    "max_profit": 1169472,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/abc-tehno-solutions-srl-34389396/",
+    "name": "Abc Tehno Solutions SRL",
+    "url": "https://www.listafirme.ro/abc-tehno-solutions-srl-34389396/",
+    "caen": "4619",
+    "activity": "Intermedieri in comertul cu produse diverse",
+    "total_years": 10,
+    "years": [
+      2019
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1053736
+    ],
+    "max_profit": 1053736,
+    "min_employees": 2,
+    "best_year": 2019,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/abies-prelucrarea-lemnului-srl-13079090/",
+    "name": "Abies Prelucrarea Lemnului SRL",
+    "url": "https://www.listafirme.ro/abies-prelucrarea-lemnului-srl-13079090/",
+    "caen": "1623",
+    "activity": "Fabricarea altor elemente de dulgherie si tamplarie, pentru constructii",
+    "total_years": 20,
+    "years": [
+      2018
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      2465281
+    ],
+    "max_profit": 2465281,
+    "min_employees": 0,
+    "best_year": 2018,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/abis-project-international-development-srl-17887030/",
+    "name": "Abis Project International Development SRL",
+    "url": "https://www.listafirme.ro/abis-project-international-development-srl-17887030/",
+    "caen": "7022",
+    "activity": "Activitati de consultanta pentru afaceri si management",
+    "total_years": 20,
+    "years": [
+      2024,
+      2022
+    ],
+    "employees": [
+      0,
+      0
+    ],
+    "profits": [
+      1071863,
+      1650402
+    ],
+    "max_profit": 1650402,
+    "min_employees": 0,
+    "best_year": 2022,
+    "best_employees": 0,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/aboliv-srl-2872537/",
+    "name": "Aboliv SRL",
+    "url": "https://www.listafirme.ro/aboliv-srl-2872537/",
+    "caen": "1013",
+    "activity": "Fabricarea produselor din carne (inclusiv din carne de pasare)",
+    "total_years": 20,
+    "years": [
+      2016
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      8381302
+    ],
+    "max_profit": 8381302,
+    "min_employees": 0,
+    "best_year": 2016,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/absolut-media-agency-srl-32438476/",
+    "name": "Absolut Media Agency SRL",
+    "url": "https://www.listafirme.ro/absolut-media-agency-srl-32438476/",
+    "caen": "7312",
+    "activity": "Servicii de reprezentare media",
+    "total_years": 12,
+    "years": [
+      2018
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1003438
+    ],
+    "max_profit": 1003438,
+    "min_employees": 1,
+    "best_year": 2018,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/abstract-com-srl-8150917/",
+    "name": "Abstract Com SRL",
+    "url": "https://www.listafirme.ro/abstract-com-srl-8150917/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 20,
+    "years": [
+      2007
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1204712
+    ],
+    "max_profit": 1204712,
+    "min_employees": 1,
+    "best_year": 2007,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/acas-la-mama-srl-34680688/",
+    "name": "Acas La Mama SRL",
+    "url": "https://www.listafirme.ro/acas-la-mama-srl-34680688/",
+    "caen": "5610",
+    "activity": "Restaurante",
+    "total_years": 10,
+    "years": [
+      2020
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1231004
+    ],
+    "max_profit": 1231004,
+    "min_employees": 0,
+    "best_year": 2020,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/accender-group-srl-26711546/",
+    "name": "Accender Group SRL",
+    "url": "https://www.listafirme.ro/accender-group-srl-26711546/",
+    "caen": "7022",
+    "activity": "Activitati de consultanta pentru afaceri si management",
+    "total_years": 15,
+    "years": [
+      2023
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      2109040
+    ],
+    "max_profit": 2109040,
+    "min_employees": 2,
+    "best_year": 2023,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/accent-expres-srl-17636208/",
+    "name": "Accent Expres SRL",
+    "url": "https://www.listafirme.ro/accent-expres-srl-17636208/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 20,
+    "years": [
+      2017
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1132389
+    ],
+    "max_profit": 1132389,
+    "min_employees": 2,
+    "best_year": 2017,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/accent-jobs-for-people-romania-srl-27203716/",
+    "name": "Accent Jobs For People Romania SRL",
+    "url": "https://www.listafirme.ro/accent-jobs-for-people-romania-srl-27203716/",
+    "caen": "7810",
+    "activity": "Activitati ale agentiilor de plasare a fortei de munca",
+    "total_years": 15,
+    "years": [
+      2011
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      2477139
+    ],
+    "max_profit": 2477139,
+    "min_employees": 2,
+    "best_year": 2011,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/access-financial-services-ifn-sa-21471094/",
+    "name": "Access Financial Services IFN SA",
+    "url": "https://www.listafirme.ro/access-financial-services-ifn-sa-21471094/",
+    "caen": "6492",
+    "activity": "Alte activitati de creditare",
+    "total_years": 17,
+    "years": [
+      2022,
+      2021,
+      2020,
+      2019,
+      2018,
+      2017,
+      2011
+    ],
+    "employees": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "profits": [
+      5079687,
+      2811121,
+      2052649,
+      3413611,
+      4109699,
+      3910359,
+      1533584
+    ],
+    "max_profit": 5079687,
+    "min_employees": 0,
+    "best_year": 2022,
+    "best_employees": 0,
+    "interesting_years_count": 7
+  },
+  {
+    "href": "/accuro-srl-18023112/",
+    "name": "Accuro SRL",
+    "url": "https://www.listafirme.ro/accuro-srl-18023112/",
+    "caen": "4322",
+    "activity": "Lucrari de instalatii sanitare, de incalzire si de aer conditionat",
+    "total_years": 20,
+    "years": [
+      2006
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1537212
+    ],
+    "max_profit": 1537212,
+    "min_employees": 2,
+    "best_year": 2006,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/acibo-learning-srl-35843287/",
+    "name": "Acibo Learning SRL",
+    "url": "https://www.listafirme.ro/acibo-learning-srl-35843287/",
+    "caen": "8559",
+    "activity": "Alte forme de invatamant n.c.a.",
+    "total_years": 9,
+    "years": [
+      2024,
+      2023,
+      2022,
+      2021,
+      2020,
+      2019,
+      2018,
+      2017
+    ],
+    "employees": [
+      2,
+      1,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "profits": [
+      1596430,
+      2095438,
+      2221570,
+      1831373,
+      2160986,
+      1143319,
+      1753228,
+      1421978
+    ],
+    "max_profit": 2221570,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 2,
+    "interesting_years_count": 8
+  },
+  {
+    "href": "/acid-media-srl-19333154/",
+    "name": "Acid Media SRL",
+    "url": "https://www.listafirme.ro/acid-media-srl-19333154/",
+    "caen": "6201",
+    "activity": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+    "total_years": 17,
+    "years": [
+      2024,
+      2023,
+      2022,
+      2021
+    ],
+    "employees": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "profits": [
+      2996895,
+      2753322,
+      2675242,
+      1547611
+    ],
+    "max_profit": 2996895,
+    "min_employees": 1,
+    "best_year": 2024,
+    "best_employees": 1,
+    "interesting_years_count": 4
+  },
+  {
+    "href": "/aclam-imobiliara-srl-18068998/",
+    "name": "Aclam Imobiliara SRL",
+    "url": "https://www.listafirme.ro/aclam-imobiliara-srl-18068998/",
+    "caen": "6831",
+    "activity": "Agentii imobiliare",
+    "total_years": 18,
+    "years": [
+      2016
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1291262
+    ],
+    "max_profit": 1291262,
+    "min_employees": 1,
+    "best_year": 2016,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/acn-piese-utilaje-srl-33366670/",
+    "name": "Acn Piese Utilaje SRL",
+    "url": "https://www.listafirme.ro/acn-piese-utilaje-srl-33366670/",
+    "caen": "4791",
+    "activity": "Comert cu amanuntul prin intermediul caselor de comenzi sau prin Internet",
+    "total_years": 11,
+    "years": [
+      2022
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      3255890
+    ],
+    "max_profit": 3255890,
+    "min_employees": 0,
+    "best_year": 2022,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/acon-specialty-solutions-srl-35680597/",
+    "name": "Acon Specialty Solutions SRL",
+    "url": "https://www.listafirme.ro/acon-specialty-solutions-srl-35680597/",
+    "caen": "6920",
+    "activity": "Activitati de contabilitate si audit financiar; consultanta in domeniul fiscal",
+    "total_years": 9,
+    "years": [
+      2024
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1058580
+    ],
+    "max_profit": 1058580,
+    "min_employees": 2,
+    "best_year": 2024,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/acordo-icsm-srl-31759478/",
+    "name": "Acordo Icsm SRL",
+    "url": "https://www.listafirme.ro/acordo-icsm-srl-31759478/",
+    "caen": "3821",
+    "activity": "Tratarea si eliminarea deseurilor nepericuloase",
+    "total_years": 12,
+    "years": [
+      2021,
+      2019
+    ],
+    "employees": [
+      1,
+      1
+    ],
+    "profits": [
+      3691116,
+      2294816
+    ],
+    "max_profit": 3691116,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 1,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/acting-trans-srl-16548000/",
+    "name": "Acting Trans SRL",
+    "url": "https://www.listafirme.ro/acting-trans-srl-16548000/",
+    "caen": "5221",
+    "activity": "Activitati de servicii anexe pentru transporturi terestre",
+    "total_years": 20,
+    "years": [
+      2019
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1072599
+    ],
+    "max_profit": 1072599,
+    "min_employees": 1,
+    "best_year": 2019,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/action-petroleum-group-srl-17639654/",
+    "name": "Action Petroleum Group SRL",
+    "url": "https://www.listafirme.ro/action-petroleum-group-srl-17639654/",
+    "caen": "4619",
+    "activity": "Intermedieri in comertul cu produse diverse",
+    "total_years": 20,
+    "years": [
+      2019
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      2089313
+    ],
+    "max_profit": 2089313,
+    "min_employees": 2,
+    "best_year": 2019,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/activ-asigurari-broker-de-asigurare-reasigurare-srl-14996121/",
+    "name": "Activ Asigurari Broker De Asigurare Reasigurare SRL",
+    "url": "https://www.listafirme.ro/activ-asigurari-broker-de-asigurare-reasigurare-srl-14996121/",
+    "caen": "6622",
+    "activity": "Activitati ale agentilor si broker-ilor de asigurari",
+    "total_years": 17,
+    "years": [
+      2005
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      2603748
+    ],
+    "max_profit": 2603748,
+    "min_employees": 0,
+    "best_year": 2005,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/activ-car-srl-20211304/",
+    "name": "Activ Car SRL",
+    "url": "https://www.listafirme.ro/activ-car-srl-20211304/",
+    "caen": "4511",
+    "activity": "Comert cu autoturisme si autovehicule usoare (sub 3,5 tone)",
+    "total_years": 17,
+    "years": [
+      2022
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1190580
+    ],
+    "max_profit": 1190580,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/activ-group-management-srl-15897657/",
+    "name": "Activ Group Management SRL",
+    "url": "https://www.listafirme.ro/activ-group-management-srl-15897657/",
+    "caen": "4399",
+    "activity": "Alte lucrari speciale de constructii n.c.a.",
+    "total_years": 20,
+    "years": [
+      2009
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      6461882
+    ],
+    "max_profit": 6461882,
+    "min_employees": 2,
+    "best_year": 2009,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/activ-industry-srl-22857728/",
+    "name": "Activ Industry SRL",
+    "url": "https://www.listafirme.ro/activ-industry-srl-22857728/",
+    "caen": "4662",
+    "activity": "Comert cu ridicata al masinilor-unelte",
+    "total_years": 18,
+    "years": [
+      2017
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1661110
+    ],
+    "max_profit": 1661110,
+    "min_employees": 2,
+    "best_year": 2017,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/activ-instal-group-a.i.g.-srl-17505644/",
+    "name": "Activ Instal Group A.I.G. SRL",
+    "url": "https://www.listafirme.ro/activ-instal-group-a.i.g.-srl-17505644/",
+    "caen": "4674",
+    "activity": "Comert cu ridicata al echipamentelor si furniturilor de fierarie pentru instalatii sanitare si de incalzire",
+    "total_years": 18,
+    "years": [
+      2023,
+      2022,
+      2021,
+      2020,
+      2019,
+      2018
+    ],
+    "employees": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "profits": [
+      1126988,
+      1962850,
+      1677087,
+      1789360,
+      1724077,
+      1229055
+    ],
+    "max_profit": 1962850,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 6
+  },
+  {
+    "href": "/activ-invest-srl-14879679/",
+    "name": "Activ Invest SRL",
+    "url": "https://www.listafirme.ro/activ-invest-srl-14879679/",
+    "caen": "4666",
+    "activity": "Comert cu ridicata al altor masini si echipamente de birou",
+    "total_years": 20,
+    "years": [
+      2020
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1036262
+    ],
+    "max_profit": 1036262,
+    "min_employees": 0,
+    "best_year": 2020,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/activ-sport-fashion-ttr-srl-34670889/",
+    "name": "Activ Sport Fashion Ttr SRL",
+    "url": "https://www.listafirme.ro/activ-sport-fashion-ttr-srl-34670889/",
+    "caen": "4642",
+    "activity": "Comert cu ridicata al imbracamintei si incaltamintei",
+    "total_years": 10,
+    "years": [
+      2022
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1046025
+    ],
+    "max_profit": 1046025,
+    "min_employees": 0,
+    "best_year": 2022,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/active-media-srl-17082749/",
+    "name": "Active Media SRL",
+    "url": "https://www.listafirme.ro/active-media-srl-17082749/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 20,
+    "years": [
+      2018,
+      2017
+    ],
+    "employees": [
+      0,
+      0
+    ],
+    "profits": [
+      1060362,
+      1069532
+    ],
+    "max_profit": 1069532,
+    "min_employees": 0,
+    "best_year": 2017,
+    "best_employees": 0,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/actonpres-group-srl-25155248/",
+    "name": "Actonpres Group SRL",
+    "url": "https://www.listafirme.ro/actonpres-group-srl-25155248/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 16,
+    "years": [
+      2024
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1781530
+    ],
+    "max_profit": 1781530,
+    "min_employees": 1,
+    "best_year": 2024,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/ad-activ-optical-srl-23726178/",
+    "name": "Ad Activ Optical SRL",
+    "url": "https://www.listafirme.ro/ad-activ-optical-srl-23726178/",
+    "caen": "4618",
+    "activity": "Intermedieri in comertul specializat in vanzarea produselor cu caracter specific, n.c.a.",
+    "total_years": 17,
+    "years": [
+      2023
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1042083
+    ],
+    "max_profit": 1042083,
+    "min_employees": 1,
+    "best_year": 2023,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/ada-optic-impex-srl-9509912/",
+    "name": "Ada Optic Impex SRL",
+    "url": "https://www.listafirme.ro/ada-optic-impex-srl-9509912/",
+    "caen": "8690",
+    "activity": "Alte activitati referitoare la sanatatea umana",
+    "total_years": 19,
+    "years": [
+      2024,
+      2023
+    ],
+    "employees": [
+      2,
+      2
+    ],
+    "profits": [
+      1139870,
+      1008896
+    ],
+    "max_profit": 1139870,
+    "min_employees": 2,
+    "best_year": 2024,
+    "best_employees": 2,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/adalgo-mirus-srl-31842122/",
+    "name": "Adalgo Mirus SRL",
+    "url": "https://www.listafirme.ro/adalgo-mirus-srl-31842122/",
+    "caen": "6832",
+    "activity": "Administrarea imobilelor pe baza de comision sau contract",
+    "total_years": 12,
+    "years": [
+      2015
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1580273
+    ],
+    "max_profit": 1580273,
+    "min_employees": 2,
+    "best_year": 2015,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/adarteamus-srl-17083329/",
+    "name": "Adarteamus SRL",
+    "url": "https://www.listafirme.ro/adarteamus-srl-17083329/",
+    "caen": "4778",
+    "activity": "Comert cu amanuntul al altor bunuri noi, in magazine specializate",
+    "total_years": 19,
+    "years": [
+      2019
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      2180388
+    ],
+    "max_profit": 2180388,
+    "min_employees": 1,
+    "best_year": 2019,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/addictive-advertising-srl-35683712/",
+    "name": "Addictive Advertising SRL",
+    "url": "https://www.listafirme.ro/addictive-advertising-srl-35683712/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 9,
+    "years": [
+      2021,
+      2020
+    ],
+    "employees": [
+      2,
+      2
+    ],
+    "profits": [
+      1555905,
+      1210372
+    ],
+    "max_profit": 1555905,
+    "min_employees": 2,
+    "best_year": 2021,
+    "best_employees": 2,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/ade-gas-oil-company-srl-26733404/",
+    "name": "Ade Gas Oil Company SRL",
+    "url": "https://www.listafirme.ro/ade-gas-oil-company-srl-26733404/",
+    "caen": "4671",
+    "activity": "Comert cu ridicata al combustibililor solizi, lichizi si gazosi si al produselor derivate",
+    "total_years": 15,
+    "years": [
+      2013
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      2505406
+    ],
+    "max_profit": 2505406,
+    "min_employees": 0,
+    "best_year": 2013,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/adely-trans-company-srl-18590931/",
+    "name": "Adely Trans Company SRL",
+    "url": "https://www.listafirme.ro/adely-trans-company-srl-18590931/",
+    "caen": "4939",
+    "activity": "Alte transporturi terestre de calatori n.c.a.",
+    "total_years": 18,
+    "years": [
+      2018
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1595157
+    ],
+    "max_profit": 1595157,
+    "min_employees": 0,
+    "best_year": 2018,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/adfactory-srl-14960462/",
+    "name": "Adfactory SRL",
+    "url": "https://www.listafirme.ro/adfactory-srl-14960462/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 20,
+    "years": [
+      2023,
+      2021
+    ],
+    "employees": [
+      1,
+      1
+    ],
+    "profits": [
+      1056437,
+      1543387
+    ],
+    "max_profit": 1543387,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 1,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/adi-avantaj-trans-srl-24678028/",
+    "name": "Adi Avantaj Trans SRL",
+    "url": "https://www.listafirme.ro/adi-avantaj-trans-srl-24678028/",
+    "caen": "4941",
+    "activity": "Transporturi rutiere de marfuri",
+    "total_years": 17,
+    "years": [
+      2024,
+      2023,
+      2022
+    ],
+    "employees": [
+      1,
+      1,
+      1
+    ],
+    "profits": [
+      1158592,
+      1273388,
+      1761741
+    ],
+    "max_profit": 1761741,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 3
+  },
+  {
+    "href": "/adi-dan-com-srl-3262685/",
+    "name": "Adi Dan Com SRL",
+    "url": "https://www.listafirme.ro/adi-dan-com-srl-3262685/",
+    "caen": "4711",
+    "activity": "Comert cu amanuntul in magazine nespecializate, cu vanzare predominanta de produse alimentare, bauturi si tutun",
+    "total_years": 20,
+    "years": [
+      2024,
+      2022
+    ],
+    "employees": [
+      1,
+      1
+    ],
+    "profits": [
+      1060125,
+      1121452
+    ],
+    "max_profit": 1121452,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/adimar-logistic-intermed-srl-37307684/",
+    "name": "Adimar Logistic Intermed SRL",
+    "url": "https://www.listafirme.ro/adimar-logistic-intermed-srl-37307684/",
+    "caen": "4690",
+    "activity": "Comert cu ridicata nespecializat",
+    "total_years": 8,
+    "years": [
+      2021
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1696210
+    ],
+    "max_profit": 1696210,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/adimotori-srl-17739890/",
+    "name": "Adimotori SRL",
+    "url": "https://www.listafirme.ro/adimotori-srl-17739890/",
+    "caen": "4540",
+    "activity": "Comert cu motociclete, piese si accesorii aferente; intretinerea si repararea motocicletelor",
+    "total_years": 20,
+    "years": [
+      2022,
+      2021,
+      2020
+    ],
+    "employees": [
+      1,
+      2,
+      2
+    ],
+    "profits": [
+      1561031,
+      1323196,
+      1326877
+    ],
+    "max_profit": 1561031,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 3
+  },
+  {
+    "href": "/adin-prod-international-srl-31154808/",
+    "name": "Adin Prod International SRL",
+    "url": "https://www.listafirme.ro/adin-prod-international-srl-31154808/",
+    "caen": "4673",
+    "activity": "Comert cu ridicata al materialului lemnos si a materialelor de constructie si echipamentelor sanitare",
+    "total_years": 12,
+    "years": [
+      2021
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1232659
+    ],
+    "max_profit": 1232659,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/adisal-srl-11407094/",
+    "name": "Adisal SRL",
+    "url": "https://www.listafirme.ro/adisal-srl-11407094/",
+    "caen": "2511",
+    "activity": "Fabricarea de constructii metalice si parti componente ale structurilor metalice",
+    "total_years": 20,
+    "years": [
+      2015
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1567724
+    ],
+    "max_profit": 1567724,
+    "min_employees": 0,
+    "best_year": 2015,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/admitec-srl-6735397/",
+    "name": "Admitec SRL",
+    "url": "https://www.listafirme.ro/admitec-srl-6735397/",
+    "caen": "4651",
+    "activity": "Comert cu ridicata al calculatoarelor, echipamentelor periferice si software-lui",
+    "total_years": 20,
+    "years": [
+      2024,
+      2023
+    ],
+    "employees": [
+      1,
+      1
+    ],
+    "profits": [
+      1437383,
+      1810671
+    ],
+    "max_profit": 1810671,
+    "min_employees": 1,
+    "best_year": 2023,
+    "best_employees": 1,
+    "interesting_years_count": 2
+  },
+  {
+    "href": "/adori-lighting-srl-9620928/",
+    "name": "Adori Lighting SRL",
+    "url": "https://www.listafirme.ro/adori-lighting-srl-9620928/",
+    "caen": "4321",
+    "activity": "Lucrari de instalatii electrice",
+    "total_years": 20,
+    "years": [
+      2019
+    ],
+    "employees": [
+      2
+    ],
+    "profits": [
+      1302891
+    ],
+    "max_profit": 1302891,
+    "min_employees": 2,
+    "best_year": 2019,
+    "best_employees": 2,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/adv-web-tv-srl-24435126/",
+    "name": "Adv Web Tv SRL",
+    "url": "https://www.listafirme.ro/adv-web-tv-srl-24435126/",
+    "caen": "7311",
+    "activity": "Activitati ale agentiilor de publicitate",
+    "total_years": 17,
+    "years": [
+      2024,
+      2023,
+      2021,
+      2019
+    ],
+    "employees": [
+      2,
+      2,
+      2,
+      1
+    ],
+    "profits": [
+      1506721,
+      1054312,
+      1818151,
+      1480926
+    ],
+    "max_profit": 1818151,
+    "min_employees": 1,
+    "best_year": 2021,
+    "best_employees": 2,
+    "interesting_years_count": 4
+  },
+  {
+    "href": "/advan-constructii-srl-25642570/",
+    "name": "Advan Constructii SRL",
+    "url": "https://www.listafirme.ro/advan-constructii-srl-25642570/",
+    "caen": "4120",
+    "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+    "total_years": 16,
+    "years": [
+      2019
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1605166
+    ],
+    "max_profit": 1605166,
+    "min_employees": 0,
+    "best_year": 2019,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/advance-design-building-company-srl-35596004/",
+    "name": "Advance Design Building Company SRL",
+    "url": "https://www.listafirme.ro/advance-design-building-company-srl-35596004/",
+    "caen": "7112",
+    "activity": "Activitati de inginerie si consultanta tehnica legate de acestea",
+    "total_years": 9,
+    "years": [
+      2019
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      1801786
+    ],
+    "max_profit": 1801786,
+    "min_employees": 0,
+    "best_year": 2019,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/advanced-technique-design-srl-37579050/",
+    "name": "Advanced Technique Design SRL",
+    "url": "https://www.listafirme.ro/advanced-technique-design-srl-37579050/",
+    "caen": "7112",
+    "activity": "Activitati de inginerie si consultanta tehnica legate de acestea",
+    "total_years": 8,
+    "years": [
+      2024,
+      2022,
+      2021,
+      2019
+    ],
+    "employees": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "profits": [
+      1421653,
+      1557501,
+      1498742,
+      1398800
+    ],
+    "max_profit": 1557501,
+    "min_employees": 1,
+    "best_year": 2022,
+    "best_employees": 1,
+    "interesting_years_count": 4
+  },
+  {
+    "href": "/advans-print-promo-srl-26764770/",
+    "name": "Advans Print Promo SRL",
+    "url": "https://www.listafirme.ro/advans-print-promo-srl-26764770/",
+    "caen": "4618",
+    "activity": "Intermedieri in comertul specializat in vanzarea produselor cu caracter specific, n.c.a.",
+    "total_years": 15,
+    "years": [
+      2020
+    ],
+    "employees": [
+      1
+    ],
+    "profits": [
+      1006788
+    ],
+    "max_profit": 1006788,
+    "min_employees": 1,
+    "best_year": 2020,
+    "best_employees": 1,
+    "interesting_years_count": 1
+  },
+  {
+    "href": "/advertising-distribution-supplies-srl-29508865/",
+    "name": "Advertising Distribution Supplies SRL",
+    "url": "https://www.listafirme.ro/advertising-distribution-supplies-srl-29508865/",
+    "caen": "4669",
+    "activity": "Comert cu ridicata al altor masini si echipamente",
+    "total_years": 11,
+    "years": [
+      2020,
+      2019,
+      2018
+    ],
+    "employees": [
+      2,
+      2,
+      1
+    ],
+    "profits": [
+      2599733,
+      3179285,
+      1661086
+    ],
+    "max_profit": 3179285,
+    "min_employees": 1,
+    "best_year": 2019,
+    "best_employees": 2,
+    "interesting_years_count": 3
+  }
+];
+        const stats = {
+  "total_companies": 74,
+  "avg_profit": 1952363.0945945946,
+  "max_profit": 8381302,
+  "top_company": {
+    "href": "/aboliv-srl-2872537/",
+    "name": "Aboliv SRL",
+    "url": "https://www.listafirme.ro/aboliv-srl-2872537/",
+    "caen": "1013",
+    "activity": "Fabricarea produselor din carne (inclusiv din carne de pasare)",
+    "total_years": 20,
+    "years": [
+      2016
+    ],
+    "employees": [
+      0
+    ],
+    "profits": [
+      8381302
+    ],
+    "max_profit": 8381302,
+    "min_employees": 0,
+    "best_year": 2016,
+    "best_employees": 0,
+    "interesting_years_count": 1
+  },
+  "caen_data": {
+    "7111": {
+      "count": 1,
+      "description": "Activitati de arhitectura",
+      "companies": [
+        {
+          "href": "/1722-studiolab-inc-srl-25139471/",
+          "name": "1722 Studiolab Inc SRL",
+          "url": "https://www.listafirme.ro/1722-studiolab-inc-srl-25139471/",
+          "caen": "7111",
+          "activity": "Activitati de arhitectura",
+          "total_years": 16,
+          "years": [
+            2024,
+            2020
+          ],
+          "employees": [
+            0,
+            2
+          ],
+          "profits": [
+            2192370,
+            1412304
+          ],
+          "max_profit": 2192370,
+          "min_employees": 0,
+          "best_year": 2024,
+          "best_employees": 0,
+          "interesting_years_count": 2
+        }
+      ]
+    },
+    "6201": {
+      "count": 3,
+      "description": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+      "companies": [
+        {
+          "href": "/2b-intelligent-soft-sa-16558004/",
+          "name": "2b Intelligent Soft SA",
+          "url": "https://www.listafirme.ro/2b-intelligent-soft-sa-16558004/",
+          "caen": "6201",
+          "activity": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+          "total_years": 20,
+          "years": [
+            2018
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            2560435
+          ],
+          "max_profit": 2560435,
+          "min_employees": 0,
+          "best_year": 2018,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/4gps-international-srl-38481459/",
+          "name": "4gps International SRL",
+          "url": "https://www.listafirme.ro/4gps-international-srl-38481459/",
+          "caen": "6201",
+          "activity": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+          "total_years": 8,
+          "years": [
+            2024
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1433648
+          ],
+          "max_profit": 1433648,
+          "min_employees": 2,
+          "best_year": 2024,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/acid-media-srl-19333154/",
+          "name": "Acid Media SRL",
+          "url": "https://www.listafirme.ro/acid-media-srl-19333154/",
+          "caen": "6201",
+          "activity": "Activitati de realizare a soft-ului la comanda (software orientat client)",
+          "total_years": 17,
+          "years": [
+            2024,
+            2023,
+            2022,
+            2021
+          ],
+          "employees": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "profits": [
+            2996895,
+            2753322,
+            2675242,
+            1547611
+          ],
+          "max_profit": 2996895,
+          "min_employees": 1,
+          "best_year": 2024,
+          "best_employees": 1,
+          "interesting_years_count": 4
+        }
+      ]
+    },
+    "4651": {
+      "count": 2,
+      "description": "Comert cu ridicata al calculatoarelor, echipamentelor periferice si software-lui",
+      "companies": [
+        {
+          "href": "/2m-digital-srl-12511050/",
+          "name": "2m Digital SRL",
+          "url": "https://www.listafirme.ro/2m-digital-srl-12511050/",
+          "caen": "4651",
+          "activity": "Comert cu ridicata al calculatoarelor, echipamentelor periferice si software-lui",
+          "total_years": 20,
+          "years": [
+            2012
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1211660
+          ],
+          "max_profit": 1211660,
+          "min_employees": 0,
+          "best_year": 2012,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/admitec-srl-6735397/",
+          "name": "Admitec SRL",
+          "url": "https://www.listafirme.ro/admitec-srl-6735397/",
+          "caen": "4651",
+          "activity": "Comert cu ridicata al calculatoarelor, echipamentelor periferice si software-lui",
+          "total_years": 20,
+          "years": [
+            2024,
+            2023
+          ],
+          "employees": [
+            1,
+            1
+          ],
+          "profits": [
+            1437383,
+            1810671
+          ],
+          "max_profit": 1810671,
+          "min_employees": 1,
+          "best_year": 2023,
+          "best_employees": 1,
+          "interesting_years_count": 2
+        }
+      ]
+    },
+    "4619": {
+      "count": 3,
+      "description": "Intermedieri in comertul cu produse diverse",
+      "companies": [
+        {
+          "href": "/2n-communications-srl-12600327/",
+          "name": "2n Communications SRL",
+          "url": "https://www.listafirme.ro/2n-communications-srl-12600327/",
+          "caen": "4619",
+          "activity": "Intermedieri in comertul cu produse diverse",
+          "total_years": 20,
+          "years": [
+            2006
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            2761064
+          ],
+          "max_profit": 2761064,
+          "min_employees": 1,
+          "best_year": 2006,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/abc-tehno-solutions-srl-34389396/",
+          "name": "Abc Tehno Solutions SRL",
+          "url": "https://www.listafirme.ro/abc-tehno-solutions-srl-34389396/",
+          "caen": "4619",
+          "activity": "Intermedieri in comertul cu produse diverse",
+          "total_years": 10,
+          "years": [
+            2019
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1053736
+          ],
+          "max_profit": 1053736,
+          "min_employees": 2,
+          "best_year": 2019,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/action-petroleum-group-srl-17639654/",
+          "name": "Action Petroleum Group SRL",
+          "url": "https://www.listafirme.ro/action-petroleum-group-srl-17639654/",
+          "caen": "4619",
+          "activity": "Intermedieri in comertul cu produse diverse",
+          "total_years": 20,
+          "years": [
+            2019
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            2089313
+          ],
+          "max_profit": 2089313,
+          "min_employees": 2,
+          "best_year": 2019,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4110": {
+      "count": 1,
+      "description": "Dezvoltare (promovare) imobiliara",
+      "companies": [
+        {
+          "href": "/3d-american-style-development-srl-27071968/",
+          "name": "3d American Style Development SRL",
+          "url": "https://www.listafirme.ro/3d-american-style-development-srl-27071968/",
+          "caen": "4110",
+          "activity": "Dezvoltare (promovare) imobiliara",
+          "total_years": 15,
+          "years": [
+            2017
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            5729554
+          ],
+          "max_profit": 5729554,
+          "min_employees": 0,
+          "best_year": 2017,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4120": {
+      "count": 7,
+      "description": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+      "companies": [
+        {
+          "href": "/3dbau-srl-42084422/",
+          "name": "3dbau SRL",
+          "url": "https://www.listafirme.ro/3dbau-srl-42084422/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 5,
+          "years": [
+            2020
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1312368
+          ],
+          "max_profit": 1312368,
+          "min_employees": 0,
+          "best_year": 2020,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/a.c.i.r.-a.g.-srl-373654/",
+          "name": "A.C.I.R. A.G. SRL",
+          "url": "https://www.listafirme.ro/a.c.i.r.-a.g.-srl-373654/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 20,
+          "years": [
+            2021
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1012010
+          ],
+          "max_profit": 1012010,
+          "min_employees": 0,
+          "best_year": 2021,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/a.g.-general-construct-srl-8097163/",
+          "name": "A.G. General Construct SRL",
+          "url": "https://www.listafirme.ro/a.g.-general-construct-srl-8097163/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 20,
+          "years": [
+            2024
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1488862
+          ],
+          "max_profit": 1488862,
+          "min_employees": 0,
+          "best_year": 2024,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/a.t.d.-system-srl-13703290/",
+          "name": "A.T.D. System SRL",
+          "url": "https://www.listafirme.ro/a.t.d.-system-srl-13703290/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 20,
+          "years": [
+            2008
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1200344
+          ],
+          "max_profit": 1200344,
+          "min_employees": 0,
+          "best_year": 2008,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/ab-construct-srl-12112539/",
+          "name": "Ab Construct SRL",
+          "url": "https://www.listafirme.ro/ab-construct-srl-12112539/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 20,
+          "years": [
+            2021
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1134801
+          ],
+          "max_profit": 1134801,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/abstract-com-srl-8150917/",
+          "name": "Abstract Com SRL",
+          "url": "https://www.listafirme.ro/abstract-com-srl-8150917/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 20,
+          "years": [
+            2007
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1204712
+          ],
+          "max_profit": 1204712,
+          "min_employees": 1,
+          "best_year": 2007,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/advan-constructii-srl-25642570/",
+          "name": "Advan Constructii SRL",
+          "url": "https://www.listafirme.ro/advan-constructii-srl-25642570/",
+          "caen": "4120",
+          "activity": "Lucrari de constructii a cladirilor rezidentiale si nerezidentiale",
+          "total_years": 16,
+          "years": [
+            2019
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1605166
+          ],
+          "max_profit": 1605166,
+          "min_employees": 0,
+          "best_year": 2019,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "7912": {
+      "count": 1,
+      "description": "Activitati ale tur-operatorilor",
+      "companies": [
+        {
+          "href": "/4u-company-srl-14529231/",
+          "name": "4u Company SRL",
+          "url": "https://www.listafirme.ro/4u-company-srl-14529231/",
+          "caen": "7912",
+          "activity": "Activitati ale tur-operatorilor",
+          "total_years": 20,
+          "years": [
+            2022
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1186651
+          ],
+          "max_profit": 1186651,
+          "min_employees": 2,
+          "best_year": 2022,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "7311": {
+      "count": 7,
+      "description": "Activitati ale agentiilor de publicitate",
+      "companies": [
+        {
+          "href": "/7d-solutions-srl-28625271/",
+          "name": "7d Solutions SRL",
+          "url": "https://www.listafirme.ro/7d-solutions-srl-28625271/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 14,
+          "years": [
+            2020
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1514516
+          ],
+          "max_profit": 1514516,
+          "min_employees": 0,
+          "best_year": 2020,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/accent-expres-srl-17636208/",
+          "name": "Accent Expres SRL",
+          "url": "https://www.listafirme.ro/accent-expres-srl-17636208/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 20,
+          "years": [
+            2017
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1132389
+          ],
+          "max_profit": 1132389,
+          "min_employees": 2,
+          "best_year": 2017,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/active-media-srl-17082749/",
+          "name": "Active Media SRL",
+          "url": "https://www.listafirme.ro/active-media-srl-17082749/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 20,
+          "years": [
+            2018,
+            2017
+          ],
+          "employees": [
+            0,
+            0
+          ],
+          "profits": [
+            1060362,
+            1069532
+          ],
+          "max_profit": 1069532,
+          "min_employees": 0,
+          "best_year": 2017,
+          "best_employees": 0,
+          "interesting_years_count": 2
+        },
+        {
+          "href": "/actonpres-group-srl-25155248/",
+          "name": "Actonpres Group SRL",
+          "url": "https://www.listafirme.ro/actonpres-group-srl-25155248/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 16,
+          "years": [
+            2024
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1781530
+          ],
+          "max_profit": 1781530,
+          "min_employees": 1,
+          "best_year": 2024,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/addictive-advertising-srl-35683712/",
+          "name": "Addictive Advertising SRL",
+          "url": "https://www.listafirme.ro/addictive-advertising-srl-35683712/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 9,
+          "years": [
+            2021,
+            2020
+          ],
+          "employees": [
+            2,
+            2
+          ],
+          "profits": [
+            1555905,
+            1210372
+          ],
+          "max_profit": 1555905,
+          "min_employees": 2,
+          "best_year": 2021,
+          "best_employees": 2,
+          "interesting_years_count": 2
+        },
+        {
+          "href": "/adfactory-srl-14960462/",
+          "name": "Adfactory SRL",
+          "url": "https://www.listafirme.ro/adfactory-srl-14960462/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 20,
+          "years": [
+            2023,
+            2021
+          ],
+          "employees": [
+            1,
+            1
+          ],
+          "profits": [
+            1056437,
+            1543387
+          ],
+          "max_profit": 1543387,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 1,
+          "interesting_years_count": 2
+        },
+        {
+          "href": "/adv-web-tv-srl-24435126/",
+          "name": "Adv Web Tv SRL",
+          "url": "https://www.listafirme.ro/adv-web-tv-srl-24435126/",
+          "caen": "7311",
+          "activity": "Activitati ale agentiilor de publicitate",
+          "total_years": 17,
+          "years": [
+            2024,
+            2023,
+            2021,
+            2019
+          ],
+          "employees": [
+            2,
+            2,
+            2,
+            1
+          ],
+          "profits": [
+            1506721,
+            1054312,
+            1818151,
+            1480926
+          ],
+          "max_profit": 1818151,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 2,
+          "interesting_years_count": 4
+        }
+      ]
+    },
+    "2229": {
+      "count": 1,
+      "description": "Fabricarea altor produse din material plastic",
+      "companies": [
+        {
+          "href": "/a.m.-tel-composite-srl-10770112/",
+          "name": "A.M. Tel Composite SRL",
+          "url": "https://www.listafirme.ro/a.m.-tel-composite-srl-10770112/",
+          "caen": "2229",
+          "activity": "Fabricarea altor produse din material plastic",
+          "total_years": 20,
+          "years": [
+            2023
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1900158
+          ],
+          "max_profit": 1900158,
+          "min_employees": 1,
+          "best_year": 2023,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "6492": {
+      "count": 2,
+      "description": "Alte activitati de creditare",
+      "companies": [
+        {
+          "href": "/a.m.r.-leasing-ifn-sa-8534217/",
+          "name": "A.M.R. Leasing IFN SA",
+          "url": "https://www.listafirme.ro/a.m.r.-leasing-ifn-sa-8534217/",
+          "caen": "6492",
+          "activity": "Alte activitati de creditare",
+          "total_years": 17,
+          "years": [
+            2018
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1545747
+          ],
+          "max_profit": 1545747,
+          "min_employees": 0,
+          "best_year": 2018,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/access-financial-services-ifn-sa-21471094/",
+          "name": "Access Financial Services IFN SA",
+          "url": "https://www.listafirme.ro/access-financial-services-ifn-sa-21471094/",
+          "caen": "6492",
+          "activity": "Alte activitati de creditare",
+          "total_years": 17,
+          "years": [
+            2022,
+            2021,
+            2020,
+            2019,
+            2018,
+            2017,
+            2011
+          ],
+          "employees": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "profits": [
+            5079687,
+            2811121,
+            2052649,
+            3413611,
+            4109699,
+            3910359,
+            1533584
+          ],
+          "max_profit": 5079687,
+          "min_employees": 0,
+          "best_year": 2022,
+          "best_employees": 0,
+          "interesting_years_count": 7
+        }
+      ]
+    },
+    "4675": {
+      "count": 1,
+      "description": "Comert cu ridicata al produselor chimice",
+      "companies": [
+        {
+          "href": "/a.n.v.-trader-srl-15032752/",
+          "name": "A.N.V. Trader SRL",
+          "url": "https://www.listafirme.ro/a.n.v.-trader-srl-15032752/",
+          "caen": "4675",
+          "activity": "Comert cu ridicata al produselor chimice",
+          "total_years": 20,
+          "years": [
+            2022
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1322892
+          ],
+          "max_profit": 1322892,
+          "min_employees": 2,
+          "best_year": 2022,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4211": {
+      "count": 1,
+      "description": "Lucrari de constructii a drumurilor si autostrazilor",
+      "companies": [
+        {
+          "href": "/a.s.g.-com-srl-9914036/",
+          "name": "A.S.G. Com SRL",
+          "url": "https://www.listafirme.ro/a.s.g.-com-srl-9914036/",
+          "caen": "4211",
+          "activity": "Lucrari de constructii a drumurilor si autostrazilor",
+          "total_years": 20,
+          "years": [
+            2023
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1511818
+          ],
+          "max_profit": 1511818,
+          "min_employees": 1,
+          "best_year": 2023,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4321": {
+      "count": 2,
+      "description": "Lucrari de instalatii electrice",
+      "companies": [
+        {
+          "href": "/aad-techno-light-srl-13845651/",
+          "name": "Aad Techno Light SRL",
+          "url": "https://www.listafirme.ro/aad-techno-light-srl-13845651/",
+          "caen": "4321",
+          "activity": "Lucrari de instalatii electrice",
+          "total_years": 20,
+          "years": [
+            2024
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1496747
+          ],
+          "max_profit": 1496747,
+          "min_employees": 2,
+          "best_year": 2024,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/adori-lighting-srl-9620928/",
+          "name": "Adori Lighting SRL",
+          "url": "https://www.listafirme.ro/adori-lighting-srl-9620928/",
+          "caen": "4321",
+          "activity": "Lucrari de instalatii electrice",
+          "total_years": 20,
+          "years": [
+            2019
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1302891
+          ],
+          "max_profit": 1302891,
+          "min_employees": 2,
+          "best_year": 2019,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "7112": {
+      "count": 3,
+      "description": "Activitati de inginerie si consultanta tehnica legate de acestea",
+      "companies": [
+        {
+          "href": "/aas-fly-consulting-srl-28402121/",
+          "name": "Aas Fly Consulting SRL",
+          "url": "https://www.listafirme.ro/aas-fly-consulting-srl-28402121/",
+          "caen": "7112",
+          "activity": "Activitati de inginerie si consultanta tehnica legate de acestea",
+          "total_years": 14,
+          "years": [
+            2022,
+            2019
+          ],
+          "employees": [
+            1,
+            1
+          ],
+          "profits": [
+            1179289,
+            2070103
+          ],
+          "max_profit": 2070103,
+          "min_employees": 1,
+          "best_year": 2019,
+          "best_employees": 1,
+          "interesting_years_count": 2
+        },
+        {
+          "href": "/advance-design-building-company-srl-35596004/",
+          "name": "Advance Design Building Company SRL",
+          "url": "https://www.listafirme.ro/advance-design-building-company-srl-35596004/",
+          "caen": "7112",
+          "activity": "Activitati de inginerie si consultanta tehnica legate de acestea",
+          "total_years": 9,
+          "years": [
+            2019
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1801786
+          ],
+          "max_profit": 1801786,
+          "min_employees": 0,
+          "best_year": 2019,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/advanced-technique-design-srl-37579050/",
+          "name": "Advanced Technique Design SRL",
+          "url": "https://www.listafirme.ro/advanced-technique-design-srl-37579050/",
+          "caen": "7112",
+          "activity": "Activitati de inginerie si consultanta tehnica legate de acestea",
+          "total_years": 8,
+          "years": [
+            2024,
+            2022,
+            2021,
+            2019
+          ],
+          "employees": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "profits": [
+            1421653,
+            1557501,
+            1498742,
+            1398800
+          ],
+          "max_profit": 1557501,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 4
+        }
+      ]
+    },
+    "6820": {
+      "count": 2,
+      "description": "Inchirierea si subinchirierea bunurilor imobiliare proprii sau inchiriate",
+      "companies": [
+        {
+          "href": "/ab-immo-cluj-srl-13705518/",
+          "name": "Ab Immo Cluj SRL",
+          "url": "https://www.listafirme.ro/ab-immo-cluj-srl-13705518/",
+          "caen": "6820",
+          "activity": "Inchirierea si subinchirierea bunurilor imobiliare proprii sau inchiriate",
+          "total_years": 20,
+          "years": [
+            2023,
+            2021
+          ],
+          "employees": [
+            1,
+            1
+          ],
+          "profits": [
+            3043019,
+            1656912
+          ],
+          "max_profit": 3043019,
+          "min_employees": 1,
+          "best_year": 2023,
+          "best_employees": 1,
+          "interesting_years_count": 2
+        },
+        {
+          "href": "/ab-immo-timisoara-srl-12863870/",
+          "name": "Ab Immo Timisoara SRL",
+          "url": "https://www.listafirme.ro/ab-immo-timisoara-srl-12863870/",
+          "caen": "6820",
+          "activity": "Inchirierea si subinchirierea bunurilor imobiliare proprii sau inchiriate",
+          "total_years": 20,
+          "years": [
+            2021
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1009410
+          ],
+          "max_profit": 1009410,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "1013": {
+      "count": 2,
+      "description": "Fabricarea produselor din carne (inclusiv din carne de pasare)",
+      "companies": [
+        {
+          "href": "/abator-costiprod-2000-srl-30065613/",
+          "name": "Abator Costiprod 2000 SRL",
+          "url": "https://www.listafirme.ro/abator-costiprod-2000-srl-30065613/",
+          "caen": "1013",
+          "activity": "Fabricarea produselor din carne (inclusiv din carne de pasare)",
+          "total_years": 13,
+          "years": [
+            2021,
+            2020,
+            2019
+          ],
+          "employees": [
+            0,
+            0,
+            0
+          ],
+          "profits": [
+            1482089,
+            2685609,
+            1543871
+          ],
+          "max_profit": 2685609,
+          "min_employees": 0,
+          "best_year": 2020,
+          "best_employees": 0,
+          "interesting_years_count": 3
+        },
+        {
+          "href": "/aboliv-srl-2872537/",
+          "name": "Aboliv SRL",
+          "url": "https://www.listafirme.ro/aboliv-srl-2872537/",
+          "caen": "1013",
+          "activity": "Fabricarea produselor din carne (inclusiv din carne de pasare)",
+          "total_years": 20,
+          "years": [
+            2016
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            8381302
+          ],
+          "max_profit": 8381302,
+          "min_employees": 0,
+          "best_year": 2016,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "9002": {
+      "count": 1,
+      "description": "Activitati suport pentru interpretarea artistica (spectacole)",
+      "companies": [
+        {
+          "href": "/abc-productie-de-evenimente-srl-29338205/",
+          "name": "Abc Productie De Evenimente SRL",
+          "url": "https://www.listafirme.ro/abc-productie-de-evenimente-srl-29338205/",
+          "caen": "9002",
+          "activity": "Activitati suport pentru interpretarea artistica (spectacole)",
+          "total_years": 13,
+          "years": [
+            2022
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1169472
+          ],
+          "max_profit": 1169472,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "1623": {
+      "count": 1,
+      "description": "Fabricarea altor elemente de dulgherie si tamplarie, pentru constructii",
+      "companies": [
+        {
+          "href": "/abies-prelucrarea-lemnului-srl-13079090/",
+          "name": "Abies Prelucrarea Lemnului SRL",
+          "url": "https://www.listafirme.ro/abies-prelucrarea-lemnului-srl-13079090/",
+          "caen": "1623",
+          "activity": "Fabricarea altor elemente de dulgherie si tamplarie, pentru constructii",
+          "total_years": 20,
+          "years": [
+            2018
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            2465281
+          ],
+          "max_profit": 2465281,
+          "min_employees": 0,
+          "best_year": 2018,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "7022": {
+      "count": 2,
+      "description": "Activitati de consultanta pentru afaceri si management",
+      "companies": [
+        {
+          "href": "/abis-project-international-development-srl-17887030/",
+          "name": "Abis Project International Development SRL",
+          "url": "https://www.listafirme.ro/abis-project-international-development-srl-17887030/",
+          "caen": "7022",
+          "activity": "Activitati de consultanta pentru afaceri si management",
+          "total_years": 20,
+          "years": [
+            2024,
+            2022
+          ],
+          "employees": [
+            0,
+            0
+          ],
+          "profits": [
+            1071863,
+            1650402
+          ],
+          "max_profit": 1650402,
+          "min_employees": 0,
+          "best_year": 2022,
+          "best_employees": 0,
+          "interesting_years_count": 2
+        },
+        {
+          "href": "/accender-group-srl-26711546/",
+          "name": "Accender Group SRL",
+          "url": "https://www.listafirme.ro/accender-group-srl-26711546/",
+          "caen": "7022",
+          "activity": "Activitati de consultanta pentru afaceri si management",
+          "total_years": 15,
+          "years": [
+            2023
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            2109040
+          ],
+          "max_profit": 2109040,
+          "min_employees": 2,
+          "best_year": 2023,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "7312": {
+      "count": 1,
+      "description": "Servicii de reprezentare media",
+      "companies": [
+        {
+          "href": "/absolut-media-agency-srl-32438476/",
+          "name": "Absolut Media Agency SRL",
+          "url": "https://www.listafirme.ro/absolut-media-agency-srl-32438476/",
+          "caen": "7312",
+          "activity": "Servicii de reprezentare media",
+          "total_years": 12,
+          "years": [
+            2018
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1003438
+          ],
+          "max_profit": 1003438,
+          "min_employees": 1,
+          "best_year": 2018,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "5610": {
+      "count": 1,
+      "description": "Restaurante",
+      "companies": [
+        {
+          "href": "/acas-la-mama-srl-34680688/",
+          "name": "Acas La Mama SRL",
+          "url": "https://www.listafirme.ro/acas-la-mama-srl-34680688/",
+          "caen": "5610",
+          "activity": "Restaurante",
+          "total_years": 10,
+          "years": [
+            2020
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1231004
+          ],
+          "max_profit": 1231004,
+          "min_employees": 0,
+          "best_year": 2020,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "7810": {
+      "count": 1,
+      "description": "Activitati ale agentiilor de plasare a fortei de munca",
+      "companies": [
+        {
+          "href": "/accent-jobs-for-people-romania-srl-27203716/",
+          "name": "Accent Jobs For People Romania SRL",
+          "url": "https://www.listafirme.ro/accent-jobs-for-people-romania-srl-27203716/",
+          "caen": "7810",
+          "activity": "Activitati ale agentiilor de plasare a fortei de munca",
+          "total_years": 15,
+          "years": [
+            2011
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            2477139
+          ],
+          "max_profit": 2477139,
+          "min_employees": 2,
+          "best_year": 2011,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4322": {
+      "count": 1,
+      "description": "Lucrari de instalatii sanitare, de incalzire si de aer conditionat",
+      "companies": [
+        {
+          "href": "/accuro-srl-18023112/",
+          "name": "Accuro SRL",
+          "url": "https://www.listafirme.ro/accuro-srl-18023112/",
+          "caen": "4322",
+          "activity": "Lucrari de instalatii sanitare, de incalzire si de aer conditionat",
+          "total_years": 20,
+          "years": [
+            2006
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1537212
+          ],
+          "max_profit": 1537212,
+          "min_employees": 2,
+          "best_year": 2006,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "8559": {
+      "count": 1,
+      "description": "Alte forme de invatamant n.c.a.",
+      "companies": [
+        {
+          "href": "/acibo-learning-srl-35843287/",
+          "name": "Acibo Learning SRL",
+          "url": "https://www.listafirme.ro/acibo-learning-srl-35843287/",
+          "caen": "8559",
+          "activity": "Alte forme de invatamant n.c.a.",
+          "total_years": 9,
+          "years": [
+            2024,
+            2023,
+            2022,
+            2021,
+            2020,
+            2019,
+            2018,
+            2017
+          ],
+          "employees": [
+            2,
+            1,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "profits": [
+            1596430,
+            2095438,
+            2221570,
+            1831373,
+            2160986,
+            1143319,
+            1753228,
+            1421978
+          ],
+          "max_profit": 2221570,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 2,
+          "interesting_years_count": 8
+        }
+      ]
+    },
+    "6831": {
+      "count": 1,
+      "description": "Agentii imobiliare",
+      "companies": [
+        {
+          "href": "/aclam-imobiliara-srl-18068998/",
+          "name": "Aclam Imobiliara SRL",
+          "url": "https://www.listafirme.ro/aclam-imobiliara-srl-18068998/",
+          "caen": "6831",
+          "activity": "Agentii imobiliare",
+          "total_years": 18,
+          "years": [
+            2016
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1291262
+          ],
+          "max_profit": 1291262,
+          "min_employees": 1,
+          "best_year": 2016,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4791": {
+      "count": 1,
+      "description": "Comert cu amanuntul prin intermediul caselor de comenzi sau prin Internet",
+      "companies": [
+        {
+          "href": "/acn-piese-utilaje-srl-33366670/",
+          "name": "Acn Piese Utilaje SRL",
+          "url": "https://www.listafirme.ro/acn-piese-utilaje-srl-33366670/",
+          "caen": "4791",
+          "activity": "Comert cu amanuntul prin intermediul caselor de comenzi sau prin Internet",
+          "total_years": 11,
+          "years": [
+            2022
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            3255890
+          ],
+          "max_profit": 3255890,
+          "min_employees": 0,
+          "best_year": 2022,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "6920": {
+      "count": 1,
+      "description": "Activitati de contabilitate si audit financiar; consultanta in domeniul fiscal",
+      "companies": [
+        {
+          "href": "/acon-specialty-solutions-srl-35680597/",
+          "name": "Acon Specialty Solutions SRL",
+          "url": "https://www.listafirme.ro/acon-specialty-solutions-srl-35680597/",
+          "caen": "6920",
+          "activity": "Activitati de contabilitate si audit financiar; consultanta in domeniul fiscal",
+          "total_years": 9,
+          "years": [
+            2024
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1058580
+          ],
+          "max_profit": 1058580,
+          "min_employees": 2,
+          "best_year": 2024,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "3821": {
+      "count": 1,
+      "description": "Tratarea si eliminarea deseurilor nepericuloase",
+      "companies": [
+        {
+          "href": "/acordo-icsm-srl-31759478/",
+          "name": "Acordo Icsm SRL",
+          "url": "https://www.listafirme.ro/acordo-icsm-srl-31759478/",
+          "caen": "3821",
+          "activity": "Tratarea si eliminarea deseurilor nepericuloase",
+          "total_years": 12,
+          "years": [
+            2021,
+            2019
+          ],
+          "employees": [
+            1,
+            1
+          ],
+          "profits": [
+            3691116,
+            2294816
+          ],
+          "max_profit": 3691116,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 1,
+          "interesting_years_count": 2
+        }
+      ]
+    },
+    "5221": {
+      "count": 1,
+      "description": "Activitati de servicii anexe pentru transporturi terestre",
+      "companies": [
+        {
+          "href": "/acting-trans-srl-16548000/",
+          "name": "Acting Trans SRL",
+          "url": "https://www.listafirme.ro/acting-trans-srl-16548000/",
+          "caen": "5221",
+          "activity": "Activitati de servicii anexe pentru transporturi terestre",
+          "total_years": 20,
+          "years": [
+            2019
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1072599
+          ],
+          "max_profit": 1072599,
+          "min_employees": 1,
+          "best_year": 2019,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "6622": {
+      "count": 1,
+      "description": "Activitati ale agentilor si broker-ilor de asigurari",
+      "companies": [
+        {
+          "href": "/activ-asigurari-broker-de-asigurare-reasigurare-srl-14996121/",
+          "name": "Activ Asigurari Broker De Asigurare Reasigurare SRL",
+          "url": "https://www.listafirme.ro/activ-asigurari-broker-de-asigurare-reasigurare-srl-14996121/",
+          "caen": "6622",
+          "activity": "Activitati ale agentilor si broker-ilor de asigurari",
+          "total_years": 17,
+          "years": [
+            2005
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            2603748
+          ],
+          "max_profit": 2603748,
+          "min_employees": 0,
+          "best_year": 2005,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4511": {
+      "count": 1,
+      "description": "Comert cu autoturisme si autovehicule usoare (sub 3,5 tone)",
+      "companies": [
+        {
+          "href": "/activ-car-srl-20211304/",
+          "name": "Activ Car SRL",
+          "url": "https://www.listafirme.ro/activ-car-srl-20211304/",
+          "caen": "4511",
+          "activity": "Comert cu autoturisme si autovehicule usoare (sub 3,5 tone)",
+          "total_years": 17,
+          "years": [
+            2022
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1190580
+          ],
+          "max_profit": 1190580,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4399": {
+      "count": 1,
+      "description": "Alte lucrari speciale de constructii n.c.a.",
+      "companies": [
+        {
+          "href": "/activ-group-management-srl-15897657/",
+          "name": "Activ Group Management SRL",
+          "url": "https://www.listafirme.ro/activ-group-management-srl-15897657/",
+          "caen": "4399",
+          "activity": "Alte lucrari speciale de constructii n.c.a.",
+          "total_years": 20,
+          "years": [
+            2009
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            6461882
+          ],
+          "max_profit": 6461882,
+          "min_employees": 2,
+          "best_year": 2009,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4662": {
+      "count": 1,
+      "description": "Comert cu ridicata al masinilor-unelte",
+      "companies": [
+        {
+          "href": "/activ-industry-srl-22857728/",
+          "name": "Activ Industry SRL",
+          "url": "https://www.listafirme.ro/activ-industry-srl-22857728/",
+          "caen": "4662",
+          "activity": "Comert cu ridicata al masinilor-unelte",
+          "total_years": 18,
+          "years": [
+            2017
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1661110
+          ],
+          "max_profit": 1661110,
+          "min_employees": 2,
+          "best_year": 2017,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4674": {
+      "count": 1,
+      "description": "Comert cu ridicata al echipamentelor si furniturilor de fierarie pentru instalatii sanitare si de incalzire",
+      "companies": [
+        {
+          "href": "/activ-instal-group-a.i.g.-srl-17505644/",
+          "name": "Activ Instal Group A.I.G. SRL",
+          "url": "https://www.listafirme.ro/activ-instal-group-a.i.g.-srl-17505644/",
+          "caen": "4674",
+          "activity": "Comert cu ridicata al echipamentelor si furniturilor de fierarie pentru instalatii sanitare si de incalzire",
+          "total_years": 18,
+          "years": [
+            2023,
+            2022,
+            2021,
+            2020,
+            2019,
+            2018
+          ],
+          "employees": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          "profits": [
+            1126988,
+            1962850,
+            1677087,
+            1789360,
+            1724077,
+            1229055
+          ],
+          "max_profit": 1962850,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 6
+        }
+      ]
+    },
+    "4666": {
+      "count": 1,
+      "description": "Comert cu ridicata al altor masini si echipamente de birou",
+      "companies": [
+        {
+          "href": "/activ-invest-srl-14879679/",
+          "name": "Activ Invest SRL",
+          "url": "https://www.listafirme.ro/activ-invest-srl-14879679/",
+          "caen": "4666",
+          "activity": "Comert cu ridicata al altor masini si echipamente de birou",
+          "total_years": 20,
+          "years": [
+            2020
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1036262
+          ],
+          "max_profit": 1036262,
+          "min_employees": 0,
+          "best_year": 2020,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4642": {
+      "count": 1,
+      "description": "Comert cu ridicata al imbracamintei si incaltamintei",
+      "companies": [
+        {
+          "href": "/activ-sport-fashion-ttr-srl-34670889/",
+          "name": "Activ Sport Fashion Ttr SRL",
+          "url": "https://www.listafirme.ro/activ-sport-fashion-ttr-srl-34670889/",
+          "caen": "4642",
+          "activity": "Comert cu ridicata al imbracamintei si incaltamintei",
+          "total_years": 10,
+          "years": [
+            2022
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1046025
+          ],
+          "max_profit": 1046025,
+          "min_employees": 0,
+          "best_year": 2022,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4618": {
+      "count": 2,
+      "description": "Intermedieri in comertul specializat in vanzarea produselor cu caracter specific, n.c.a.",
+      "companies": [
+        {
+          "href": "/ad-activ-optical-srl-23726178/",
+          "name": "Ad Activ Optical SRL",
+          "url": "https://www.listafirme.ro/ad-activ-optical-srl-23726178/",
+          "caen": "4618",
+          "activity": "Intermedieri in comertul specializat in vanzarea produselor cu caracter specific, n.c.a.",
+          "total_years": 17,
+          "years": [
+            2023
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1042083
+          ],
+          "max_profit": 1042083,
+          "min_employees": 1,
+          "best_year": 2023,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        },
+        {
+          "href": "/advans-print-promo-srl-26764770/",
+          "name": "Advans Print Promo SRL",
+          "url": "https://www.listafirme.ro/advans-print-promo-srl-26764770/",
+          "caen": "4618",
+          "activity": "Intermedieri in comertul specializat in vanzarea produselor cu caracter specific, n.c.a.",
+          "total_years": 15,
+          "years": [
+            2020
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1006788
+          ],
+          "max_profit": 1006788,
+          "min_employees": 1,
+          "best_year": 2020,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "8690": {
+      "count": 1,
+      "description": "Alte activitati referitoare la sanatatea umana",
+      "companies": [
+        {
+          "href": "/ada-optic-impex-srl-9509912/",
+          "name": "Ada Optic Impex SRL",
+          "url": "https://www.listafirme.ro/ada-optic-impex-srl-9509912/",
+          "caen": "8690",
+          "activity": "Alte activitati referitoare la sanatatea umana",
+          "total_years": 19,
+          "years": [
+            2024,
+            2023
+          ],
+          "employees": [
+            2,
+            2
+          ],
+          "profits": [
+            1139870,
+            1008896
+          ],
+          "max_profit": 1139870,
+          "min_employees": 2,
+          "best_year": 2024,
+          "best_employees": 2,
+          "interesting_years_count": 2
+        }
+      ]
+    },
+    "6832": {
+      "count": 1,
+      "description": "Administrarea imobilelor pe baza de comision sau contract",
+      "companies": [
+        {
+          "href": "/adalgo-mirus-srl-31842122/",
+          "name": "Adalgo Mirus SRL",
+          "url": "https://www.listafirme.ro/adalgo-mirus-srl-31842122/",
+          "caen": "6832",
+          "activity": "Administrarea imobilelor pe baza de comision sau contract",
+          "total_years": 12,
+          "years": [
+            2015
+          ],
+          "employees": [
+            2
+          ],
+          "profits": [
+            1580273
+          ],
+          "max_profit": 1580273,
+          "min_employees": 2,
+          "best_year": 2015,
+          "best_employees": 2,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4778": {
+      "count": 1,
+      "description": "Comert cu amanuntul al altor bunuri noi, in magazine specializate",
+      "companies": [
+        {
+          "href": "/adarteamus-srl-17083329/",
+          "name": "Adarteamus SRL",
+          "url": "https://www.listafirme.ro/adarteamus-srl-17083329/",
+          "caen": "4778",
+          "activity": "Comert cu amanuntul al altor bunuri noi, in magazine specializate",
+          "total_years": 19,
+          "years": [
+            2019
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            2180388
+          ],
+          "max_profit": 2180388,
+          "min_employees": 1,
+          "best_year": 2019,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4671": {
+      "count": 1,
+      "description": "Comert cu ridicata al combustibililor solizi, lichizi si gazosi si al produselor derivate",
+      "companies": [
+        {
+          "href": "/ade-gas-oil-company-srl-26733404/",
+          "name": "Ade Gas Oil Company SRL",
+          "url": "https://www.listafirme.ro/ade-gas-oil-company-srl-26733404/",
+          "caen": "4671",
+          "activity": "Comert cu ridicata al combustibililor solizi, lichizi si gazosi si al produselor derivate",
+          "total_years": 15,
+          "years": [
+            2013
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            2505406
+          ],
+          "max_profit": 2505406,
+          "min_employees": 0,
+          "best_year": 2013,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4939": {
+      "count": 1,
+      "description": "Alte transporturi terestre de calatori n.c.a.",
+      "companies": [
+        {
+          "href": "/adely-trans-company-srl-18590931/",
+          "name": "Adely Trans Company SRL",
+          "url": "https://www.listafirme.ro/adely-trans-company-srl-18590931/",
+          "caen": "4939",
+          "activity": "Alte transporturi terestre de calatori n.c.a.",
+          "total_years": 18,
+          "years": [
+            2018
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1595157
+          ],
+          "max_profit": 1595157,
+          "min_employees": 0,
+          "best_year": 2018,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4941": {
+      "count": 1,
+      "description": "Transporturi rutiere de marfuri",
+      "companies": [
+        {
+          "href": "/adi-avantaj-trans-srl-24678028/",
+          "name": "Adi Avantaj Trans SRL",
+          "url": "https://www.listafirme.ro/adi-avantaj-trans-srl-24678028/",
+          "caen": "4941",
+          "activity": "Transporturi rutiere de marfuri",
+          "total_years": 17,
+          "years": [
+            2024,
+            2023,
+            2022
+          ],
+          "employees": [
+            1,
+            1,
+            1
+          ],
+          "profits": [
+            1158592,
+            1273388,
+            1761741
+          ],
+          "max_profit": 1761741,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 3
+        }
+      ]
+    },
+    "4711": {
+      "count": 1,
+      "description": "Comert cu amanuntul in magazine nespecializate, cu vanzare predominanta de produse alimentare, bauturi si tutun",
+      "companies": [
+        {
+          "href": "/adi-dan-com-srl-3262685/",
+          "name": "Adi Dan Com SRL",
+          "url": "https://www.listafirme.ro/adi-dan-com-srl-3262685/",
+          "caen": "4711",
+          "activity": "Comert cu amanuntul in magazine nespecializate, cu vanzare predominanta de produse alimentare, bauturi si tutun",
+          "total_years": 20,
+          "years": [
+            2024,
+            2022
+          ],
+          "employees": [
+            1,
+            1
+          ],
+          "profits": [
+            1060125,
+            1121452
+          ],
+          "max_profit": 1121452,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 2
+        }
+      ]
+    },
+    "4690": {
+      "count": 1,
+      "description": "Comert cu ridicata nespecializat",
+      "companies": [
+        {
+          "href": "/adimar-logistic-intermed-srl-37307684/",
+          "name": "Adimar Logistic Intermed SRL",
+          "url": "https://www.listafirme.ro/adimar-logistic-intermed-srl-37307684/",
+          "caen": "4690",
+          "activity": "Comert cu ridicata nespecializat",
+          "total_years": 8,
+          "years": [
+            2021
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1696210
+          ],
+          "max_profit": 1696210,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4540": {
+      "count": 1,
+      "description": "Comert cu motociclete, piese si accesorii aferente; intretinerea si repararea motocicletelor",
+      "companies": [
+        {
+          "href": "/adimotori-srl-17739890/",
+          "name": "Adimotori SRL",
+          "url": "https://www.listafirme.ro/adimotori-srl-17739890/",
+          "caen": "4540",
+          "activity": "Comert cu motociclete, piese si accesorii aferente; intretinerea si repararea motocicletelor",
+          "total_years": 20,
+          "years": [
+            2022,
+            2021,
+            2020
+          ],
+          "employees": [
+            1,
+            2,
+            2
+          ],
+          "profits": [
+            1561031,
+            1323196,
+            1326877
+          ],
+          "max_profit": 1561031,
+          "min_employees": 1,
+          "best_year": 2022,
+          "best_employees": 1,
+          "interesting_years_count": 3
+        }
+      ]
+    },
+    "4673": {
+      "count": 1,
+      "description": "Comert cu ridicata al materialului lemnos si a materialelor de constructie si echipamentelor sanitare",
+      "companies": [
+        {
+          "href": "/adin-prod-international-srl-31154808/",
+          "name": "Adin Prod International SRL",
+          "url": "https://www.listafirme.ro/adin-prod-international-srl-31154808/",
+          "caen": "4673",
+          "activity": "Comert cu ridicata al materialului lemnos si a materialelor de constructie si echipamentelor sanitare",
+          "total_years": 12,
+          "years": [
+            2021
+          ],
+          "employees": [
+            1
+          ],
+          "profits": [
+            1232659
+          ],
+          "max_profit": 1232659,
+          "min_employees": 1,
+          "best_year": 2021,
+          "best_employees": 1,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "2511": {
+      "count": 1,
+      "description": "Fabricarea de constructii metalice si parti componente ale structurilor metalice",
+      "companies": [
+        {
+          "href": "/adisal-srl-11407094/",
+          "name": "Adisal SRL",
+          "url": "https://www.listafirme.ro/adisal-srl-11407094/",
+          "caen": "2511",
+          "activity": "Fabricarea de constructii metalice si parti componente ale structurilor metalice",
+          "total_years": 20,
+          "years": [
+            2015
+          ],
+          "employees": [
+            0
+          ],
+          "profits": [
+            1567724
+          ],
+          "max_profit": 1567724,
+          "min_employees": 0,
+          "best_year": 2015,
+          "best_employees": 0,
+          "interesting_years_count": 1
+        }
+      ]
+    },
+    "4669": {
+      "count": 1,
+      "description": "Comert cu ridicata al altor masini si echipamente",
+      "companies": [
+        {
+          "href": "/advertising-distribution-supplies-srl-29508865/",
+          "name": "Advertising Distribution Supplies SRL",
+          "url": "https://www.listafirme.ro/advertising-distribution-supplies-srl-29508865/",
+          "caen": "4669",
+          "activity": "Comert cu ridicata al altor masini si echipamente",
+          "total_years": 11,
+          "years": [
+            2020,
+            2019,
+            2018
+          ],
+          "employees": [
+            2,
+            2,
+            1
+          ],
+          "profits": [
+            2599733,
+            3179285,
+            1661086
+          ],
+          "max_profit": 3179285,
+          "min_employees": 1,
+          "best_year": 2019,
+          "best_employees": 2,
+          "interesting_years_count": 3
+        }
+      ]
+    }
+  },
+  "year_distribution": {
+    "2024": 15,
+    "2020": 13,
+    "2018": 10,
+    "2012": 1,
+    "2006": 2,
+    "2017": 6,
+    "2022": 16,
+    "2021": 17,
+    "2023": 13,
+    "2008": 1,
+    "2019": 16,
+    "2016": 2,
+    "2007": 1,
+    "2011": 2,
+    "2005": 1,
+    "2009": 1,
+    "2015": 2,
+    "2013": 1
+  },
+  "profit_range": {
+    "min": 1003438,
+    "max": 8381302
+  }
+};
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            populateTable();
+            setupSearch();
+            setupSorting();
+        });
+        
+        // Global variables for sorting
+        let currentSort = { column: 'max_profit', direction: 'desc' };
+        let filteredCompanies = [...companies];
+        
+        function initializeCharts() {
+            createProfitChart();
+            createIndustryChart();
+            createScatterChart();
+            createYearChart();
+        }
+        
+        function createProfitChart() {
+            const ctx = document.getElementById('profitChart').getContext('2d');
+            const profits = companies.map(c => c.max_profit);
+            
+            // Create histogram bins
+            const min = Math.min(...profits);
+            const max = Math.max(...profits);
+            const binSize = Math.ceil((max - min) / 6);
+            const bins = [];
+            const labels = [];
+            
+            for (let i = 0; i < 6; i++) {
+                const start = min + (i * binSize);
+                const end = start + binSize;
+                labels.push(`${(start/1000000).toFixed(1)}-${(end/1000000).toFixed(1)}M`);
+                bins.push(profits.filter(p => p >= start && p < end).length);
+            }
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Companies',
+                        data: bins,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Companies'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Profit Range (RON)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createIndustryChart() {
+            const ctx = document.getElementById('industryChart').getContext('2d');
+            const caenData = stats.caen_data || {};
+            
+            const labels = Object.keys(caenData);
+            const data = labels.map(label => caenData[label].count);
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#E7E9ED', '#8E44AD'
+            ];
+            
+            window.industryChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    onClick: function(event, elements) {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const caenCode = labels[elementIndex];
+                            showIndustryModal(caenCode);
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createScatterChart() {
+            const ctx = document.getElementById('scatterChart').getContext('2d');
+            const scatterData = companies.map(c => ({
+                x: c.min_employees,
+                y: c.max_profit,
+                label: c.name
+            }));
+            
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Companies',
+                        data: scatterData,
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Number of Employees'
+                            },
+                            min: -0.5,
+                            max: 2.5
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Max Profit (RON)'
+                            },
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = context.raw;
+                                    return `${point.label}: ${point.x} employees, ${(point.y/1000000).toFixed(2)}M RON`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createYearChart() {
+            const ctx = document.getElementById('yearChart').getContext('2d');
+            const yearData = stats.year_distribution || {};
+            
+            const labels = Object.keys(yearData).sort();
+            const data = labels.map(year => yearData[year]);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Companies with Peak Performance',
+                        data: data,
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Companies'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Year'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function populateTable() {
+            const tbody = document.getElementById('companyTable');
+            tbody.innerHTML = ''; // Clear existing rows
+            
+            const sortedCompanies = sortCompanies(filteredCompanies, currentSort.column, currentSort.direction);
+            
+            sortedCompanies.forEach(company => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><a href="${company.url}" target="_blank" class="company-link">${company.name}</a></td>
+                    <td>${company.caen || 'N/A'}</td>
+                    <td>${company.activity || 'N/A'}</td>
+                    <td>${company.best_year || 'N/A'}</td>
+                    <td>${company.best_employees !== null ? company.best_employees : 'N/A'}</td>
+                    <td>${company.max_profit.toLocaleString()} RON</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updateSortIndicators();
+        }
+        
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                if (searchTerm === '') {
+                    filteredCompanies = [...companies];
+                } else {
+                    filteredCompanies = companies.filter(company => {
+                        return company.name.toLowerCase().includes(searchTerm) ||
+                               (company.caen && company.caen.toLowerCase().includes(searchTerm)) ||
+                               (company.activity && company.activity.toLowerCase().includes(searchTerm));
+                    });
+                }
+                
+                populateTable();
+            });
+        }
+        
+        function setupSorting() {
+            const headers = document.querySelectorAll('.sortable');
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-column');
+                    
+                    if (currentSort.column === column) {
+                        // Toggle direction if same column
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        // New column, default to descending for numeric, ascending for text
+                        currentSort.column = column;
+                        currentSort.direction = ['max_profit', 'best_employees', 'best_year'].includes(column) ? 'desc' : 'asc';
+                    }
+                    
+                    populateTable();
+                });
+            });
+        }
+        
+        function sortCompanies(companies, column, direction) {
+            return companies.sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
+                
+                // Handle null/undefined values
+                if (valueA === null || valueA === undefined) valueA = '';
+                if (valueB === null || valueB === undefined) valueB = '';
+                
+                // Convert to appropriate types for comparison
+                if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    valueA = valueA.toLowerCase();
+                    valueB = valueB.toLowerCase();
+                }
+                
+                let comparison = 0;
+                if (valueA > valueB) {
+                    comparison = 1;
+                } else if (valueA < valueB) {
+                    comparison = -1;
+                }
+                
+                return direction === 'desc' ? comparison * -1 : comparison;
+            });
+        }
+        
+        function updateSortIndicators() {
+            // Reset all indicators
+            document.querySelectorAll('.sort-indicator').forEach(indicator => {
+                indicator.textContent = '↕';
+            });
+            
+            // Update current sort indicator
+            const currentHeader = document.querySelector(`[data-column="${currentSort.column}"] .sort-indicator`);
+            if (currentHeader) {
+                currentHeader.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+            }
+        }
+        
+        function showIndustryModal(caenCode) {
+            const caenData = stats.caen_data[caenCode];
+            if (!caenData) return;
+            
+            const modal = new bootstrap.Modal(document.getElementById('industryModal'));
+            
+            // Update modal title
+            document.getElementById('industryModalTitle').textContent = `CAEN ${caenCode} - ${caenData.count} Companies`;
+            
+            // Update description
+            document.getElementById('industryDescription').innerHTML = `
+                <h6>Industry Description:</h6>
+                <p>${caenData.description}</p>
+            `;
+            
+            // Update companies list
+            const companiesHtml = caenData.companies
+                .sort((a, b) => b.max_profit - a.max_profit)
+                .map(company => `
+                    <div class="row mb-2 border-bottom pb-2">
+                        <div class="col-md-8">
+                            <a href="${company.url}" target="_blank" class="company-link">
+                                <strong>${company.name}</strong>
+                            </a>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            ${company.max_profit.toLocaleString()} RON
+                        </div>
+                        <div class="col-md-2 text-end">
+                            ${company.best_employees !== null ? company.best_employees : 'N/A'} employees
+                        </div>
+                    </div>
+                `).join('');
+            
+            document.getElementById('industryCompanies').innerHTML = `
+                <h6>Companies in this industry:</h6>
+                <div class="row mb-2">
+                    <div class="col-md-8"><strong>Company</strong></div>
+                    <div class="col-md-2 text-end"><strong>Max Profit</strong></div>
+                    <div class="col-md-2 text-end"><strong>Employees</strong></div>
+                </div>
+                ${companiesHtml}
+            `;
+            
+            modal.show();
+        }
+    </script>
+</body>
+</html>
